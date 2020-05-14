@@ -123,7 +123,7 @@
             this.progress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.progress.Location = new System.Drawing.Point(24, 370);
-            this.progress.Maximum = 10;
+            this.progress.Maximum = 30;
             this.progress.Name = "progress";
             this.progress.Size = new System.Drawing.Size(573, 23);
             this.progress.Step = 1;

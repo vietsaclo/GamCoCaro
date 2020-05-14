@@ -17,6 +17,7 @@ namespace GameCoCaRo
         private int soO;
         private bool isNguoiChoiA, isKetThuc;
         private Stack<Button> stack;
+        private Timer timer;
 
         public GameCaro()
         {
@@ -31,6 +32,10 @@ namespace GameCoCaRo
             isKetThuc = false;
             soO = 10;
             banCo = new Button[soO, soO];
+
+            timer = new Timer();
+            timer.Interval = 1000;
+            timer.Tick += timer_Tick;
         }
 
         private void taiGiaoDien()
@@ -62,12 +67,12 @@ namespace GameCoCaRo
 
         void btn_Click(object sender, EventArgs e)
         {
-            //SetThoiGianChoi();
             Button btn = (Button)sender;
             //Kiem tra co cho click ko
             if (btn.Cursor == Cursors.No)
                 return;
 
+            SetThoiGianChoi();
             if (isNguoiChoiA)
             {
                 btn.Text = "X";
@@ -84,12 +89,13 @@ namespace GameCoCaRo
             //kiem tra co thang ko
             if (laThangGame(btn.Tag.ToString().Split(',')))
             {
-                showNguoiChoiThang();
+                showNguoiChoiThang(false);
                 while (stack.Count != 0)
                     stack.Pop().BackColor = Color.LightGray;
 
                 //Set tat ca button ko click duoc
                 setButtonNonClick();
+                timer.Stop();
                 return;
             }
 
@@ -98,12 +104,22 @@ namespace GameCoCaRo
             setNguoiChoi();
         }
 
-        private void showNguoiChoiThang()
+        private void showNguoiChoiThang(bool hetGio)
         {
-            if (isNguoiChoiA)
-                MessageBox.Show("Nguoi Choi A Thang!", "thong Bao");
+            if (hetGio)
+            {
+                if (isNguoiChoiA)
+                    MessageBox.Show("Nguoi Choi B Thang!", "thong Bao");
+                else
+                    MessageBox.Show("Nguoi Choi A Thang!", "Thong Bao");
+            }
             else
-                MessageBox.Show("Nguoi Choi B Thang!");
+            {
+                if (isNguoiChoiA)
+                    MessageBox.Show("Nguoi Choi A Thang!", "thong Bao");
+                else
+                    MessageBox.Show("Nguoi Choi B Thang!", "Thong Bao");
+            }
         }
 
         private void setButtonNonClick()
@@ -213,7 +229,7 @@ namespace GameCoCaRo
                 Button btnCheck;
                 if (toaDo.Y >= 1)
                 {
-                    btnCheck = banCo[toaDo.Y, toaDo.Y - 1];
+                    btnCheck = banCo[toaDo.X, toaDo.Y - 1];
                     if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
                         count++;
                 }
@@ -272,7 +288,7 @@ namespace GameCoCaRo
                 toaDo = layToaDo(btnCuoi);
                 if (toaDo.X < soO - 1 && toaDo.Y < soO - 1)
                 {
-                    btnCheck = banCo[toaDo.X + 1, toaDo.Y - 1];
+                    btnCheck = banCo[toaDo.X + 1, toaDo.Y + 1];
                     if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
                         count++;
                 }
@@ -340,13 +356,16 @@ namespace GameCoCaRo
             setNguoiChoi();
             btnBatDau.Enabled = false;
             btnChoiLai.Enabled = true;
-            //SetThoiGianChoi();
+            timer.Start();
+            SetThoiGianChoi();
         }
 
         private void btnChoiLai_Click(object sender, EventArgs e)
         {
             btnChoiLai.Enabled = false;
             btnBatDau.Enabled = true;
+            timer.Stop();
+            progress.Value = 0;
         }
 
         private void setNguoiChoiA()
@@ -379,17 +398,9 @@ namespace GameCoCaRo
                 setNguoiChoiB();
         }
 
-        Timer timer;
         private void SetThoiGianChoi()
         {
-            if (timer == null)
-                timer = new Timer();
-            else
-                timer.Stop();
-            timer.Interval = 1000;
-            timer.Tick += timer_Tick;
-            timer.Start();
-            progress.Value = 10;
+            progress.Value = 30;
         }
 
         void timer_Tick(object sender, EventArgs e)
@@ -398,7 +409,7 @@ namespace GameCoCaRo
             {
                 timer.Stop();
                 setButtonNonClick();
-                showNguoiChoiThang();
+                showNguoiChoiThang(true);
             }
             else
                 progress.Value = progress.Value - progress.Step;
