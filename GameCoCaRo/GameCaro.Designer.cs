@@ -35,7 +35,7 @@
             this.btnBatDau = new System.Windows.Forms.Button();
             this.btnChoiLai = new System.Windows.Forms.Button();
             this.pnBanCo = new System.Windows.Forms.Panel();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.progress = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // label1
@@ -118,21 +118,23 @@
             this.pnBanCo.Size = new System.Drawing.Size(573, 282);
             this.pnBanCo.TabIndex = 6;
             // 
-            // progressBar1
+            // progress
             // 
-            this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.progress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar1.Location = new System.Drawing.Point(24, 370);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(573, 23);
-            this.progressBar1.TabIndex = 7;
+            this.progress.Location = new System.Drawing.Point(24, 370);
+            this.progress.Maximum = 30;
+            this.progress.Name = "progress";
+            this.progress.Size = new System.Drawing.Size(573, 23);
+            this.progress.Step = 1;
+            this.progress.TabIndex = 7;
             // 
             // GameCaro
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(609, 404);
-            this.Controls.Add(this.progressBar1);
+            this.Controls.Add(this.progress);
             this.Controls.Add(this.pnBanCo);
             this.Controls.Add(this.btnChoiLai);
             this.Controls.Add(this.btnBatDau);
@@ -157,7 +159,7 @@
         private System.Windows.Forms.Button btnBatDau;
         private System.Windows.Forms.Button btnChoiLai;
         private System.Windows.Forms.Panel pnBanCo;
-        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.ProgressBar progress;
     }
 }
 

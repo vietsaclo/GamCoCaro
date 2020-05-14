@@ -7,3 +7,5 @@ D:\Project\C#\GameCoCaRo\GameCoCaRo\obj\Debug\GameCoCaRo.csproj.GenerateResource
 D:\Project\C#\GameCoCaRo\GameCoCaRo\obj\Debug\GameCoCaRo.exe
 D:\Project\C#\GameCoCaRo\GameCoCaRo\obj\Debug\GameCoCaRo.pdb
 D:\Project\C#\GameCoCaRo\GameCoCaRo\obj\Debug\GameCoCaRo.GameCaro.resources
+D:\Project\C#\GameCoCaRo\GameCoCaRo\bin\Debug\ThietKeControl.dll
+D:\Project\C#\GameCoCaRo\GameCoCaRo\bin\Debug\ThietKeControl.pdb
