@@ -13,10 +13,10 @@ namespace GameCoCaRo
     public partial class GameCaro : Form
     {
         //Variables
-        private Button[,] banCo;
         private int soO;
-        private bool isNguoiChoiA, isKetThuc;
-        private Stack<Button> stack;
+        private int[,] banCo;
+        private bool isNguoiChoiA;
+        private Stack<Point> stack;
         private Timer timer;
 
         public GameCaro()
@@ -27,15 +27,11 @@ namespace GameCoCaRo
 
         private void initMyComponent()
         {
-            stack = new Stack<Button>();
-            isNguoiChoiA = true;
-            isKetThuc = false;
             soO = 10;
-            banCo = new Button[soO, soO];
-
+            banCo = new int[soO, soO];
+            isNguoiChoiA = true;
+            stack = new Stack<Point>();
             timer = new Timer();
-            timer.Interval = 1000;
-            timer.Tick += timer_Tick;
         }
 
         private void taiGiaoDien()
@@ -47,7 +43,7 @@ namespace GameCoCaRo
                 for (int j = 0; j < soO; j++)
                 {
                     btn = createButton(i, j);
-                    banCo[i, j] = btn;
+                    banCo[i, j] = -1;
                     pnBanCo.Controls.Add(btn);
                 }
             }
@@ -56,7 +52,7 @@ namespace GameCoCaRo
         private Button createButton(int i, int j)
         {
             Button btn = new Button();
-            btn.Tag = i + "," + j;
+            btn.Tag = new Point(i, j);
             btn.Width = btn.Height = 50;
             btn.Cursor = Cursors.Hand;
             btn.Font = new Font(btn.Font.FontFamily, 20f);
@@ -65,34 +61,47 @@ namespace GameCoCaRo
             return btn;
         }
 
+        //private Point getPosition(Button btn)
+        //{
+        //    string[] M = btn.Tag.ToString().Split(',');
+        //    return new Point(int.Parse(M[0]), int.Parse(M[1]));
+        //}
+
         void btn_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
+            Point toaDo = (Point)btn.Tag;
+
             //Kiem tra co cho click ko
             if (btn.Cursor == Cursors.No)
                 return;
-
-            SetThoiGianChoi();
+            
+            //cap nhat tren ma tran.
             if (isNguoiChoiA)
             {
                 btn.Text = "X";
                 btn.ForeColor = Color.Red;
+                banCo[toaDo.X, toaDo.Y] = 1;
             }
             else
             {
                 btn.Text = "O";
                 btn.ForeColor = Color.Blue;
+                banCo[toaDo.X, toaDo.Y] = 0;
             }
             btn.Cursor = Cursors.No;
-            btn.Click+= new EventHandler(btnNoClick);
+            btn.Click += null;
 
             //kiem tra co thang ko
-            if (laThangGame(btn.Tag.ToString().Split(',')))
+            if (laThangGame(banCo, toaDo))
             {
                 showNguoiChoiThang(false);
                 while (stack.Count != 0)
-                    stack.Pop().BackColor = Color.LightGray;
-
+                {
+                    Control ctr = timControl(stack.Pop());
+                    if (ctr != null)
+                        ctr.BackColor = Color.LightGray;
+                }
                 //Set tat ca button ko click duoc
                 setButtonNonClick();
                 timer.Stop();
@@ -102,6 +111,14 @@ namespace GameCoCaRo
             //khong thang
             isNguoiChoiA = !isNguoiChoiA;
             setNguoiChoi();
+        }
+
+        private Control timControl(Point toaDo)
+        {
+            foreach (Control ctr in pnBanCo.Controls)
+                if ((Point)ctr.Tag == toaDo)
+                    return ctr;
+            return null;
         }
 
         private void showNguoiChoiThang(bool hetGio)
@@ -122,74 +139,59 @@ namespace GameCoCaRo
             }
         }
 
-        private void setButtonNonClick()
+        /// <summary>
+        /// Hàm kiểm tra tất cả các trường hợp dọc, ngang, chéo, phụ.
+        /// xem có thắng không.
+        /// </summary>
+        /// <param name="banCo">Lưu các số (-1, 0, 1) Tương ứng với
+        /// (Chưa đánh, đánh O, đánh X)</param>
+        /// <param name="toaDo">Khi một sự kiện đánh cờ liền kiểm tra xem,
+        /// có thắng game hay là không.</param>
+        /// <returns></returns>
+        private bool laThangGame(int[,] banCo, Point toaDo)
         {
-            foreach (Button btn in banCo)
-            {
-                btn.Cursor = Cursors.No;
-                btn.Click += new System.EventHandler(btnNoClick);
-            }
-        }
-
-        private void btnNoClick(object sender, EventArgs ar)
-        {
-            MessageBox.Show("Hanh Dong Khong Chap Nhan", "Thong Bao", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-
-        private Point layToaDo(Button btn)
-        {
-            string[] str = btn.Tag.ToString().Split(',');
-            return new Point(int.Parse(str[0]), int.Parse(str[1]));
-        }
-
-        private bool laThangGame(string[] ids)
-        {
-            int x = int.Parse(ids[0]), y = int.Parse(ids[1]);
-
-            isKetThuc = laThangTheoChieuDoc(x, y) || laThangTheoChieuNgang(x, y) || laThangTheoCheoChinh(x, y) || laThangTheoCheoPhu(x, y);
-            return isKetThuc;
+            return laThangTheoChieuDoc(banCo, toaDo) || laThangTheoChieuNgang(banCo, toaDo) || laThangTheoCheoChinh(banCo, toaDo) || laThangTheoCheoPhu(banCo, toaDo);
         }
 
         //kiem tra thang theo chieu doc
-        private bool laThangTheoChieuDoc(int x, int y)
+        private bool laThangTheoChieuDoc(int[,] banCo, Point toaDo)
         {
             stack.Clear();
             //find index;
-            string nguoiChoiHienTai = banCo[x, y].Text;
-            while (x >= 1 && banCo[x - 1, y].Text.Equals(nguoiChoiHienTai))
+            int x = toaDo.X, y = toaDo.Y;
+            int nguoiChoiHienTai = banCo[x, y];
+            while (x >= 1 && banCo[x - 1, y] == nguoiChoiHienTai)
                 x -= 1;
 
-            stack.Push(banCo[x, y]);
+            stack.Push(new Point(x, y));
 
             //dem
             int dem = 1;
-            while (x < soO - 1 && banCo[x + 1, y].Text.Equals(nguoiChoiHienTai))
+            while (x < soO - 1 && banCo[x + 1, y] == nguoiChoiHienTai)
             {
                 dem += 1;
                 x += 1;
-                stack.Push(banCo[x, y]);
+                stack.Push(new Point(x, y));
             }
 
             if (dem >= 5)
             {
-                Button[] arr = stack.ToArray();
-                Button btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
+                Point[] arr = stack.ToArray();
+                Point btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
 
                 int count = 0;//Dem xem co bi chan 2 dau khong
-                Point toaDo = layToaDo(btnDau);
-                Button btnCheck;
-                if (toaDo.X >= 1)
+                int btnCheck;
+                if (btnDau.X >= 1)
                 {
-                    btnCheck = banCo[toaDo.X - 1, toaDo.Y];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnDau.X - 1, btnDau.Y];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
-                toaDo = layToaDo(btnCuoi);
-                if (toaDo.X < soO - 1)
+                if (btnCuoi.X < soO - 1)
                 {
-                    btnCheck = banCo[toaDo.X + 1, toaDo.Y];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnCuoi.X + 1, btnCuoi.Y];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
@@ -200,45 +202,44 @@ namespace GameCoCaRo
         }
 
         //kiem tra thang theo chieu Ngang
-        private bool laThangTheoChieuNgang(int x, int y)
+        private bool laThangTheoChieuNgang(int[,] banCo, Point toaDo)
         {
             stack.Clear();
             //find index;
-            string nguoiChoiHienTai = banCo[x, y].Text;
-            while (y >= 1 && banCo[x , y-1].Text.Equals(nguoiChoiHienTai))
+            int x = toaDo.X, y = toaDo.Y;
+            int nguoiChoiHienTai = banCo[x, y];
+            while (y >= 1 && banCo[x, y - 1] == nguoiChoiHienTai)
                 y -= 1;
 
-            stack.Push(banCo[x, y]);
+            stack.Push(new Point(x, y));
 
             //dem
             int dem = 1;
-            while (y < soO - 1 && banCo[x , y+1].Text.Equals(nguoiChoiHienTai))
+            while (y < soO - 1 && banCo[x, y + 1] == nguoiChoiHienTai)
             {
                 dem += 1;
                 y += 1;
-                stack.Push(banCo[x, y]);
+                stack.Push(new Point(x, y));
             }
 
             if (dem >= 5)
             {
-                Button[] arr = stack.ToArray();
-                Button btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
+                Point[] arr = stack.ToArray();
+                Point btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
 
                 int count = 0;//Dem xem co bi chan 2 dau khong
-                Point toaDo = layToaDo(btnDau);
-                Button btnCheck;
-                if (toaDo.Y >= 1)
+                int btnCheck;
+                if (btnDau.Y >= 1)
                 {
-                    btnCheck = banCo[toaDo.X, toaDo.Y - 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnDau.X, btnDau.Y - 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
-                toaDo = layToaDo(btnCuoi);
-                if (toaDo.Y < soO - 1)
+                if (btnCuoi.Y < soO - 1)
                 {
-                    btnCheck = banCo[toaDo.X, toaDo.Y + 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnCuoi.X, btnCuoi.Y + 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
@@ -249,47 +250,46 @@ namespace GameCoCaRo
         }
 
         //kiem tra thang game theo cheo chinh
-        private bool laThangTheoCheoChinh(int x, int y)
+        private bool laThangTheoCheoChinh(int[,] banCo, Point toaDo)
         {
             stack.Clear();
             //start index;
-            string nguoiChoiHienTai = banCo[x, y].Text;
-            while (x >= 1 && y >= 1 && banCo[x - 1, y - 1].Text.Equals(nguoiChoiHienTai))
+            int x = toaDo.X, y = toaDo.Y;
+            int nguoiChoiHienTai = banCo[x, y];
+            while (x >= 1 && y >= 1 && banCo[x - 1, y - 1] == nguoiChoiHienTai)
             {
                 x -= 1;
                 y -= 1;
             }
 
-            stack.Push(banCo[x, y]);
+            stack.Push(new Point(x, y));
             //dem
             int dem = 1;
-            while (x < soO - 1 && y < soO - 1 && banCo[x + 1, y + 1].Text.Equals(nguoiChoiHienTai))
+            while (x < soO - 1 && y < soO - 1 && banCo[x + 1, y + 1] == nguoiChoiHienTai)
             {
                 dem += 1;
                 x += 1;
                 y += 1;
-                stack.Push(banCo[x, y]);
+                stack.Push(new Point(x, y));
             }
             if (dem >= 5)
             {
-                Button[] arr = stack.ToArray();
-                Button btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
+                Point[] arr = stack.ToArray();
+                Point btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
 
                 int count = 0;//Dem xem co bi chan 2 dau khong
-                Point toaDo = layToaDo(btnDau);
-                Button btnCheck;
-                if (toaDo.X >= 1 && toaDo.Y >= 1)
+                int btnCheck;
+                if (btnDau.X >= 1 && btnDau.Y >= 1)
                 {
-                    btnCheck = banCo[toaDo.X - 1, toaDo.Y - 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnDau.X - 1, btnDau.Y - 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
-                toaDo = layToaDo(btnCuoi);
-                if (toaDo.X < soO - 1 && toaDo.Y < soO - 1)
+                if (btnCuoi.X < soO - 1 && btnCuoi.Y < soO - 1)
                 {
-                    btnCheck = banCo[toaDo.X + 1, toaDo.Y + 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnCuoi.X + 1, btnCuoi.Y + 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
@@ -300,47 +300,46 @@ namespace GameCoCaRo
         }
 
         //kiem tra thang game theo cheo phu
-        private bool laThangTheoCheoPhu(int x, int y)
+        private bool laThangTheoCheoPhu(int[,] banCo, Point toaDo)
         {
             stack.Clear();
             //start index;
-            string nguoiChoiHienTai = banCo[x, y].Text;
-            while (x >= 1 && y < soO -1 && banCo[x - 1, y + 1].Text.Equals(nguoiChoiHienTai))
+            int x = toaDo.X, y = toaDo.Y;
+            int nguoiChoiHienTai = banCo[x, y];
+            while (x >= 1 && y < soO - 1 && banCo[x - 1, y + 1] == nguoiChoiHienTai)
             {
                 x -= 1;
                 y += 1;
             }
 
-            stack.Push(banCo[x, y]);
+            stack.Push(new Point(x, y));
             //dem
             int dem = 1;
-            while (x < soO - 1 && y >= 1 && banCo[x + 1, y - 1].Text.Equals(nguoiChoiHienTai))
+            while (x < soO - 1 && y >= 1 && banCo[x + 1, y - 1] == nguoiChoiHienTai)
             {
                 dem += 1;
                 x += 1;
                 y -= 1;
-                stack.Push(banCo[x, y]);
+                stack.Push(new Point(x, y));
             }
             if (dem >= 5)
             {
-                Button[] arr = stack.ToArray();
-                Button btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
+                Point[] arr = stack.ToArray();
+                Point btnCuoi = arr[0], btnDau = arr[arr.Length - 1];
 
                 int count = 0;//Dem xem co bi chan 2 dau khong
-                Point toaDo = layToaDo(btnDau);
-                Button btnCheck;
-                if (toaDo.X >= 1 && toaDo.Y < soO - 1)
+                int btnCheck;
+                if (btnDau.X >= 1 && btnDau.Y < soO - 1)
                 {
-                    btnCheck = banCo[toaDo.X - 1, toaDo.Y + 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnDau.X - 1, btnDau.Y + 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
-                toaDo = layToaDo(btnCuoi);
-                if (toaDo.X < soO - 1 && toaDo.Y >= 1)
+                if (btnCuoi.X < soO - 1 && btnCuoi.Y >= 1)
                 {
-                    btnCheck = banCo[toaDo.X + 1, toaDo.Y - 1];
-                    if (!btnCheck.Text.Equals(nguoiChoiHienTai) && !string.IsNullOrEmpty(btnCheck.Text))
+                    btnCheck = banCo[btnCuoi.X + 1, btnCuoi.Y - 1];
+                    if (btnCheck != nguoiChoiHienTai && btnCheck != -1)
                         count++;
                 }
 
@@ -348,35 +347,6 @@ namespace GameCoCaRo
             }
 
             return false;
-        }
-
-        private void btnBatDau_Click(object sender, EventArgs e)
-        {
-            taiGiaoDien();
-            setNguoiChoi();
-            btnBatDau.Enabled = false;
-            btnChoiLai.Enabled = true;
-            timer.Start();
-            SetThoiGianChoi();
-        }
-
-        private void btnChoiLai_Click(object sender, EventArgs e)
-        {
-            btnChoiLai.Enabled = false;
-            btnBatDau.Enabled = true;
-            timer.Stop();
-            progress.Value = 0;
-        }
-
-        private void setNguoiChoiA()
-        {
-            tbNguoiChoiA.BackColor = Color.Brown;
-            tbNguoiChoiA.Font = new Font(tbNguoiChoiA.Font, FontStyle.Bold);
-            tbNguoiChoiA.ForeColor = Color.White;
-
-            tbNguoiChoiB.BackColor = Color.White;
-            tbNguoiChoiB.Font = new Font(tbNguoiChoiA.Font, FontStyle.Regular);
-            tbNguoiChoiB.ForeColor = Color.Black;
         }
 
         private void setNguoiChoiB()
@@ -398,21 +368,39 @@ namespace GameCoCaRo
                 setNguoiChoiB();
         }
 
-        private void SetThoiGianChoi()
+        private void setNguoiChoiA()
         {
-            progress.Value = 30;
+            tbNguoiChoiA.BackColor = Color.Brown;
+            tbNguoiChoiA.Font = new Font(tbNguoiChoiA.Font, FontStyle.Bold);
+            tbNguoiChoiA.ForeColor = Color.White;
+
+            tbNguoiChoiB.BackColor = Color.White;
+            tbNguoiChoiB.Font = new Font(tbNguoiChoiA.Font, FontStyle.Regular);
+            tbNguoiChoiB.ForeColor = Color.Black;
         }
 
-        void timer_Tick(object sender, EventArgs e)
+        private void setButtonNonClick()
         {
-            if (progress.Value == 0)
-            {
-                timer.Stop();
-                setButtonNonClick();
-                showNguoiChoiThang(true);
-            }
-            else
-                progress.Value = progress.Value - progress.Step;
+            foreach (Control btn in pnBanCo.Controls)
+                if (btn is Button)
+                {
+                    btn.Cursor = Cursors.No;
+                    btn.Click += null;
+                }
+        }
+
+        private void btnBatDau_Click(object sender, EventArgs e)
+        {
+            taiGiaoDien();
+            btnBatDau.Enabled = false;
+            btnChoiLai.Enabled = true;
+            setNguoiChoi();
+        }
+
+        private void btnChoiLai_Click(object sender, EventArgs e)
+        {
+            btnChoiLai.Enabled = false;
+            btnBatDau.Enabled = true;
         }
     }
 }
